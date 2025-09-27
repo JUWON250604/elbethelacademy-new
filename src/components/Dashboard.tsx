@@ -4,9 +4,13 @@ import { useAuth } from "../contexts/AuthContext";
 import { Permission } from "../types/roles";
 import InvitationManagement from "./admin/InvitationManagement";
 
+// Sub-dashboards
+import StudentDashboard from "./dashboard/StudentDashboard";
+import TeacherDashboard from "./dashboard/TeacherDashboard";
+import AdminDashboard from "./dashboard/AdminDashboard";
+
 export default function Dashboard() {
-  const { user, loading, signOut, hasPermission, isAdmin, isSuperAdmin } =
-    useAuth();
+  const { user, loading, signOut, hasPermission, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -25,11 +29,20 @@ export default function Dashboard() {
     }
   };
 
+  // Handlers passed to children
+  const handleSubjectClick = (subject: string) => {
+    alert(`Viewing details for ${subject}`);
+  };
+
+  const handleDownloadResults = () => {
+    alert("Downloading result PDF...");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-20 w-20 border-b-2 border-yellow-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
@@ -41,107 +54,90 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">
-                ElBethel Academy
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user.name}</span>
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                {user.role.replace("_", " ").toUpperCase()}
-              </span>
-              <button
-                onClick={handleSignOut}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen flex bg-gray-50 font-sans">
+      {/* Sidebar */}
+      <aside className="hidden md:flex md:flex-col w-64 bg-[#003d69] text-white">
+        <div className="h-16 flex items-center justify-center font-bold text-lg bg-[#56225e]">
+          ElBethel Academy
         </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Navigation Tabs for Admin Users */}
-          {isAdmin && (
-            <div className="mb-6">
-              <nav className="flex space-x-8" aria-label="Tabs">
-                <button
-                  onClick={() => setActiveTab("overview")}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === "overview"
-                      ? "border-indigo-500 text-indigo-600"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-                >
-                  Overview
-                </button>
-                {hasPermission(Permission.INVITE_USERS) && (
-                  <button
-                    onClick={() => setActiveTab("invitations")}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === "invitations"
-                        ? "border-indigo-500 text-indigo-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    User Invitations
-                  </button>
-                )}
-              </nav>
-            </div>
+        <nav className="flex-1 px-4 py-6 space-y-4">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`w-full text-left px-4 py-2 rounded-lg transition ${
+              activeTab === "overview"
+                ? "bg-[#ffb607] text-white"
+                : "hover:bg-[#56225e]"
+            }`}
+          >
+            Overview
+          </button>
+          {isAdmin && hasPermission(Permission.INVITE_USERS) && (
+            <button
+              onClick={() => setActiveTab("invitations")}
+              className={`w-full text-left px-4 py-2 rounded-lg transition ${
+                activeTab === "invitations"
+                  ? "bg-[#ffb607] text-white"
+                  : "hover:bg-[#56225e]"
+              }`}
+            >
+              User Invitations
+            </button>
           )}
+        </nav>
+        <button
+          onClick={handleSignOut}
+          className="m-4 bg-[#ffb607] hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold"
+        >
+          Sign Out
+        </button>
+      </aside>
 
-          {/* Tab Content */}
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Navbar */}
+        <nav className="h-16 bg-white shadow flex items-center justify-between px-6">
+          <h1 className="text-lg font-bold text-gray-900">
+            Welcome, {user.name}
+          </h1>
+          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+            {user.role.replace("_", " ").toUpperCase()}
+          </span>
+        </nav>
+
+        {/* Content */}
+        <main className="flex-1 p-6">
           {activeTab === "invitations" &&
+          isAdmin &&
           hasPermission(Permission.INVITE_USERS) ? (
             <InvitationManagement />
           ) : (
             <>
-              {/* User Information Card */}
-              <div className="bg-white shadow rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {/* User Info */}
+              <div className="bg-white shadow-md rounded-xl p-6 mb-6">
+                <h3 className="text-lg font-semibold text-[#003d69] mb-4">
                   User Information
                 </h3>
-                <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Name</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{user.name}</dd>
+                    <dt className="font-medium text-gray-500">Name</dt>
+                    <dd>{user.name}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">
-                      Username
-                    </dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {user.username}
-                    </dd>
+                    <dt className="font-medium text-gray-500">Email</dt>
+                    <dd>{user.email}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Email</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{user.email}</dd>
+                    <dt className="font-medium text-gray-500">Role</dt>
+                    <dd className="capitalize">{user.role}</dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Role</dt>
-                    <dd className="mt-1 text-sm text-gray-900 capitalize">
-                      {user.role.replace("_", " ")}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">
-                      Status
-                    </dt>
-                    <dd className="mt-1">
+                    <dt className="font-medium text-gray-500">Status</dt>
+                    <dd>
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
                           user.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
                         }`}
                       >
                         {user.isActive ? "Active" : "Inactive"}
@@ -151,95 +147,36 @@ export default function Dashboard() {
                 </dl>
               </div>
 
-              {/* Role-based Action Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {/* Admin Panel */}
-                {isAdmin && (
-                  <div className="bg-white shadow rounded-lg p-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">
-                      Admin Panel
-                    </h4>
-                    <div className="space-y-3">
-                      {hasPermission(Permission.CREATE_USER) && (
-                        <button className="w-full text-left px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-md text-sm text-blue-700 transition-colors">
-                          Manage Users
-                        </button>
-                      )}
-                      {hasPermission(Permission.INVITE_USERS) && (
-                        <button
-                          onClick={() => setActiveTab("invitations")}
-                          className="w-full text-left px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-md text-sm text-blue-700 transition-colors"
-                        >
-                          Invite Users
-                        </button>
-                      )}
-                      {hasPermission(Permission.VIEW_ANALYTICS) && (
-                        <button className="w-full text-left px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-md text-sm text-blue-700 transition-colors">
-                          View Reports
-                        </button>
-                      )}
-                      {isSuperAdmin && (
-                        <button className="w-full text-left px-4 py-2 bg-red-50 hover:bg-red-100 rounded-md text-sm text-red-700 transition-colors">
-                          Super Admin Settings
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
+              {/* Role-specific dashboards */}
+              {user.role === "student" && (
+                <StudentDashboard
+                  className="JSS2A"
+                  subjects={["Mathematics", "English", "Basic Science"]}
+                  results={[
+                    {
+                      subject: "Mathematics",
+                      ca1: 10,
+                      ca2: 12,
+                      midterm: 18,
+                      ca4: 15,
+                      exam: 60,
+                      total: 115,
+                      grade: "A",
+                    },
+                  ]}
+                  resultsReleased={false} // change to true to release
+                  onSubjectClick={handleSubjectClick}
+                  onDownloadResults={handleDownloadResults}
+                />
+              )}
 
-                {/* Teacher Panel */}
-                {hasPermission(Permission.CREATE_COURSE) && (
-                  <div className="bg-white shadow rounded-lg p-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">
-                      Teaching Tools
-                    </h4>
-                    <div className="space-y-3">
-                      <button className="w-full text-left px-4 py-2 bg-green-50 hover:bg-green-100 rounded-md text-sm text-green-700 transition-colors">
-                        Manage Courses
-                      </button>
-                      {hasPermission(Permission.GRADE_ASSIGNMENTS) && (
-                        <button className="w-full text-left px-4 py-2 bg-green-50 hover:bg-green-100 rounded-md text-sm text-green-700 transition-colors">
-                          Grade Assignments
-                        </button>
-                      )}
-                      {hasPermission(Permission.VIEW_GRADES) && (
-                        <button className="w-full text-left px-4 py-2 bg-green-50 hover:bg-green-100 rounded-md text-sm text-green-700 transition-colors">
-                          Student Progress
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
+              {user.role === "teacher" && <TeacherDashboard />}
 
-                {/* Student Panel */}
-                {hasPermission(Permission.READ_COURSE) &&
-                  !hasPermission(Permission.CREATE_COURSE) && (
-                    <div className="bg-white shadow rounded-lg p-6">
-                      <h4 className="text-lg font-medium text-gray-900 mb-4">
-                        My Learning
-                      </h4>
-                      <div className="space-y-3">
-                        <button className="w-full text-left px-4 py-2 bg-purple-50 hover:bg-purple-100 rounded-md text-sm text-purple-700 transition-colors">
-                          My Courses
-                        </button>
-                        {hasPermission(Permission.SUBMIT_ASSIGNMENTS) && (
-                          <button className="w-full text-left px-4 py-2 bg-purple-50 hover:bg-purple-100 rounded-md text-sm text-purple-700 transition-colors">
-                            Submit Assignment
-                          </button>
-                        )}
-                        {hasPermission(Permission.VIEW_GRADES) && (
-                          <button className="w-full text-left px-4 py-2 bg-purple-50 hover:bg-purple-100 rounded-md text-sm text-purple-700 transition-colors">
-                            View Grades
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-              </div>
+              {isAdmin && <AdminDashboard />}
             </>
           )}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
